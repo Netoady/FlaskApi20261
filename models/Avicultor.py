@@ -1,5 +1,6 @@
 class Avicultor():
-    def __init__(self, nome, nascimento, cpf, caf):
+    def __init__(self, id, nome, nascimento, cpf, caf):
+        self.id = id
         self.nome = nome
         self.nascimento = nascimento
         self.cpf = cpf

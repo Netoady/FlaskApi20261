@@ -9,3 +9,9 @@ class Avicultor():
     def toDict(self):
         return {"nome": self.nome, "nascimento": self.nascimento,
                 "cpf": self.cpf, "caf": self.caf}
+
+class AvicultorSchema(Schema):
+    nome = fields.Str(required=True)
+    nascimento = fields.Date(required=True)
+    cpf = fields.Str(required=True, validate=validate.Length(max=11))
+    caf = fields.Str(required=True)

@@ -1,12 +1,10 @@
 from flask import Flask
+from dotenv import load_dotenv
+
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
-@app.get("/")
-def index():
-    return '{"versao":"1.0.1"}', 200
+load_dotenv()
 
-
-@app.get("/health")
-def healthCheck():
-    return "{'online':'true'}", 200

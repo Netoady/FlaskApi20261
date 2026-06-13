@@ -1,0 +1,8 @@
+### Testando a Rota Raiz
+GET http://127.0.0.1:5001/
+
+### Testando o Health Check
+GET http://127.0.0.1:5001/health
+
+### Testando a Rota de Avicultores (quando ligar o Blueprint)
+GET http://127.0.0.1:5001/avicultores

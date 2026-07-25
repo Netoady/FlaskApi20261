@@ -7,24 +7,34 @@ from helpers.logger import logger
 
 
 class AviculaRepository():
-    def getAll(self):
+    def getAll(self, filtros=None):
         conn = get_conn()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM tb_aviculas")
+        query = "SELECT * FROM tb_aviculas"
+        values = []
+        
+        if filtros:
+            conditions = [f"{campo} = %s" for campo in filtros]
+            values = list(filtros.values())
+            query += " WHERE " + " " + " AND ".join(conditions)
+        
+        cursor.execute(query, values)
         return cursor.fetchall()
 
     def getByIdAvicula(self, id):
         conn = get_conn()
         cursor = conn.cursor()
         logger.info("Preparando statement.")
-        cursor.execute("SELECT * FROM tb_aviculas WHERE id=?", (id,))
+        # Ajustado de ? para %s
+        cursor.execute("SELECT * FROM tb_aviculas WHERE id=%s", (id,))
         return cursor.fetchone()
 
     def insert(self, nome, cnpj, endereco):
         conn = get_conn()
         cursor = conn.cursor()
+        # Ajustado de ? para %s
         cursor.execute(
-            "INSERT INTO tb_aviculas(nome, cnpj, endereco) VALUES(?, ?, ?)",
+            "INSERT INTO tb_aviculas(nome, cnpj, endereco) VALUES(%s, %s, %s)",
             (nome, cnpj, endereco)
         )
         conn.commit()
@@ -33,8 +43,9 @@ class AviculaRepository():
     def update(self, id, nome, cnpj, endereco):
         conn = get_conn()
         cursor = conn.cursor()
+        # Ajustado de ? para %s
         cursor.execute(
-            "UPDATE tb_aviculas SET nome=?, cnpj=?, endereco=? WHERE id=?",
+            "UPDATE tb_aviculas SET nome=%s, cnpj=%s, endereco=%s WHERE id=%s",
             (nome, cnpj, endereco, id)
         )
         conn.commit()
@@ -43,6 +54,7 @@ class AviculaRepository():
     def delete(self, id):
         conn = get_conn()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM tb_aviculas WHERE id=?", (id,))
+        # Ajustado de ? para %s
+        cursor.execute("DELETE FROM tb_aviculas WHERE id=%s", (id,))
         conn.commit()
         return cursor.rowcount

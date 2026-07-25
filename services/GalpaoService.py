@@ -13,8 +13,8 @@ class GalpaoService():
     def __init__(self):
         self.galpaoRepository = GalpaoRepository()
 
-    def getAll(self):
-        rows = self.galpaoRepository.getAll()
+    def getAll(self, filtros, dict = None):
+        rows = self.galpaoRepository.getAll(filtros)
         logger.info(f"Retornando {len(rows)} galpões")
         return [rowToGalpao(r) for r in rows]
 

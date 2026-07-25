@@ -1,116 +1,50 @@
-from flask import Blueprint
-import sqlite3
 from flask import request, jsonify
+from flask_restful import Resource
 from marshmallow import ValidationError
 
-from models.Aviario import Aviario, AviarioSchema
+from models.Aviario import AviarioSchema
 from services.AviarioService import AviarioService
-from helpers.database import get_conn
 from helpers.logger import logger
 
-aviario_bp = Blueprint('aviario', __name__, url_prefix='aviarios')
+CAMPOS_FILTRO = {"name", "capacidade"}
 
-@aviario_bp.get("/")
-def getAviarios():
-    aviarios = []
-    conn = None
+class AviariosController(Resource):
+    def get(self):
+        logger.info("Listando todos os aviarios")
+        filtros = {key: value for key, value in request.args.items() if key in CAMPOS_FILTRO and value}
+        aviarios = AviarioService().getAll(filtros)
+        return [a.toDict() for a in aviarios], 200
 
-    
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM tb_aviarios")
-        rows = cursor.fetchall()
-        for row in rows:
-            aviario = Aviario(row[0], row[1], row[2])
-            aviarios.append(aviario.toDict())
-    except sqlite3.Error as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
-    return jsonify(aviarios), 200
+    def post(self):
+        try:
+            data = AviarioSchema().load(request.get_json())
+            aviario = AviarioService().create(data)
+            return aviario.toDict(), 201
+        except ValidationError as err:
+            return jsonify(err.messages), 400
 
-@aviario_bp.post("/")
-def postAviarios():
-    aviarioJson = request.get_json()
-    conn = None 
-    try:
+class AviarioController(Resource):
+    def get(self, aviario_id):
+        logger.info(f"Listando aviario pelo id: {aviario_id}")
+        aviario = AviarioService().getByIdAviario(aviario_id)
+        if aviario is None:
+            return {"mensagem": "O aviario não foi encontrado"}, 404
+        return aviario.toDict(), 200
 
-        AviarioSchema = AviarioSchema()
-        aviarioData = aviarioSchema.load(aviarioJson) # Caso falte campo, o erro é gerado aqui
+    def put(self, aviario_id):
+        try:
+            data = AviarioSchema().load(request.get_json())
+            aviario = AviarioService().update(aviario_id, data)
+            if aviario is None:
+                return {"mensagem": "O aviario não foi encontrado"}, 404
+            return aviario.toDict(), 200
+        except ValidationError as err:
+            return jsonify(err.messages), 400
 
-        #Abrir a conexão
-        conn = get_conn() 
-        
-        #Recuperar o cursor
-        cursor = conn.cursor()
+    def delete(self, aviario_id):
+        logger.info(f"Removendo aviario id: {aviario_id}")
+        removido = AviarioService().delete(aviario_id)
+        if not removido:
+            return {"mensagem": "O aviario não foi encontrado"}, 404
+        return {"mensagem": "Aviario removido com sucesso!"}, 200
 
-        query = "INSERT INTO tb_aviarios (name, capacidade) VALUES(?,?)"
-        params = (aviarioJson['nome'], aviarioJson['capacidade'])
-
-        cursor.execute(query, params)
-        conn.commit()
-
-        novo_id = cursor.lastrowid
-        aviarioJson['id'] = novo_id
-        return jsonify(aviarioJson), 201 
-
-    except sqlite3.Error as e: # Aqui é pra capturar erros de validação do banco
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
-
-@aviario_bp.put("/<int:id>")
-def putAviarios(id):
-    aviarioJson = request.get_json()
-    conn = None
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-        
-        # Query para atualizar os dados baseada no ID da URL
-        query = "UPDATE tb_aviarios SET name = ?, capacidade = ?, WHERE id = ?"
-        params = (aviarioJson['nome'], aviarioJson['capacidade'], id)
-        
-        cursor.execute(query, params)
-        conn.commit()
-
-        if cursor.rowcount == 0:
-            return jsonify({"error": "Aviario não encontrado"}), 404
-
-        avicultorJson['id'] = id
-        return jsonify(aviarioJson), 200
-
-    except sqlite3.Error as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
-
-@aviario_bp.delete("/<int:id>")
-def deleteAviarios(id):
-    conn = None
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-        
-        query = "DELETE FROM tb_aviarios WHERE id = ?"
-        cursor.execute(query, (id,))
-        conn.commit()
-
-        if cursor.rowcount == 0:
-            return jsonify({"error": "Aviario não encontrado"}), 404
-
-        return jsonify({"message": "Aviario removido com sucesso", "id": id}), 200
-
-    except sqlite3.Error as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()

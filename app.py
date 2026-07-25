@@ -1,18 +1,12 @@
-from flask import jsonify
-from helpers.application import app
-from controllers.AvicultorController import avicultor_bp
+from helpers.application import app, api
+from controllers.AvicultorController import AvicultoresController, AvicultorController
+from controllers.IndexController import IndexController, HealthController
 
-app.register_blueprint(avicultor_bp)
+api.add_resource(IndexController, '/')
+api.add_resource(HealthController, '/health')
 
-@app.get("/")
-def index():
-    return '{"versao":"1.0.1"}', 200
+api.add_resource(AvicultoresController, "/avicultores")
+api.add_resource(AvicultorController, "/avicultores/<int:avicultor_id>")
 
-
-@app.get("/health")
-def healthCheck():
-    return "{'online':'true'}", 200
-
-if __name__ == "__main__":
-    # Mudamos explicitamente para a porta 5001 e ativamos o modo debug
-    app.run(debug=True, port=5001)
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5001, debug=True)

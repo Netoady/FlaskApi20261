@@ -13,8 +13,8 @@ class AviarioService():
     def __init__(self):
         self.aviarioRepository = AviarioRepository()
 
-    def getAll(self):
-        rows = self.aviarioRepository.getAll()
+    def getAll(self, filtros, dict = None):
+        rows = self.aviarioRepository.getAll(filtros)
         logger.info(f"Retornando {len(rows)} aviários")
         return [rowToAviario(r) for r in rows]
 

@@ -1,115 +1,54 @@
-from flask import Blueprint
-import sqlite3
 from flask import request, jsonify
+from flask_restful import Resource
 from marshmallow import ValidationError
 
-from models.Galpao import Galpao, GalpaoSchema
+from models.Galpao import GalpaoSchema
 from services.GalpaoService import GalpaoService
-from helpers.database import get_conn
 from helpers.logger import logger
 
-galpao_bp = Blueprint('galpao', __name__, url_prefix='galpao')
+CAMPOS_FILTRO = {"identificador", "area_m2"}
 
-@app.get("/")
-def getGalpoes():
-    galpoes = []
-    conn = None
+class GalpoesController(Resource):
+    def get(self):
+        logger.info("Listando todos os galpoes")
+        filtros = {key: value for key, value in request.args.items() if key in CAMPOS_FILTRO and value}
+        galpoes = GalpaoService().getAll(filtros)
+        return [g.toDict() for g in galpoes], 200
+
+    def post(self):
+        try:
+            data = GalpaoSchema().load(request.get_json())
+            galpao = GalpaoService().create(data)
+            return galpao.toDict(), 201
+        except ValidationError as err:
+            return jsonify(err.messages), 400
+
+class GalpaoController(Resource):
+    def get(self, galpao_id):
+        logger.info(f"Listando galpao pelo id: {galpao_id}")
+        galpao = GalpaoService().getByIdGalpao(galpao_id)
+        if galpao is None:
+            return {"mensagem": "O galpao não foi encontrado"}, 404
+        return galpao.toDict(), 200
 
     
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM tb_galpoes")
-        rows = cursor.fetchall()
-        for row in rows:
-            galpao = Galpao(row[0], row[1], row[2])
-            galpoes.append(galpao.toDict())
-    except sqlite3.Error as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
-    return jsonify(galpoes), 200
 
-@app.post("/")
-def postGalpoes():
-    galpaoJson = request.get_json()
-    conn = None 
-    try:
+    def put(self, galpao_id):
+        try:
+            data = GalpaoSchema().load(request.get_json())
+            galpao = GalpaoService().update(galpao_id, data)
+            if galpao is None:
+                return {"mensagem": "O galpao não foi encontrado"}, 404
+            return galpao.toDict(), 200
+        except ValidationError as err:
+            return jsonify(err.messages), 400
 
-        GalpaoSchema = GalpaoSchema()
-        galpaoData = galpaoSchema.load(galpaoJson)
-
-        #Abrir a conexão
-        conn = get_conn() 
         
-        #Recuperar o cursor
-        cursor = conn.cursor()
 
-        query = "INSERT INTO tb_galpoes (identificador, area_m2) VALUES(?,?)"
-        params = (galpaoJson['identificador'], galpaoJson['area_m2'])
-        cursor.execute(query, params)
-        conn.commit()
+    def delete(self, galpao_id):
+        logger.info(f"Removendo galpao id: {galpao_id}")
+        removido = GalpaoService().delete(galpao_id)
+        if not removido:
+            return {"mensagem": "O galpao não foi encontrado"}, 404
+        return {"mensagem": "Galpao removido com sucesso!"}, 200
 
-        novo_id = cursor.lastrowid
-        galpaoJson['id'] = novo_id
-        return jsonify(galpaoJson), 201 
-
-    except sqlite3.Error as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
-
-@app.put("/<int:id>")
-def putGalpoes(id):
-    galpaoJson = request.get_json()
-    conn = None
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-        
-        # Query para atualizar os dados baseada no ID da URL
-        query = "UPDATE tb_galpoes SET identificador = ?, area_m2 = ?"
-        params = (galpaoJson['identificador'], galpaoJson['area_m2'], id)
-        
-        cursor.execute(query, params)
-        conn.commit()
-
-        if cursor.rowcount == 0:
-            return jsonify({"error": "Galpao não encontrado"}), 404
-
-        galpaoJson['id'] = id
-        return jsonify(galpaoJson), 200
-
-    except sqlite3.Error as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
-
-@app.delete("/<int:id>")
-def deleteGalpoes(id):
-    conn = None
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-        
-        query = "DELETE FROM tb_galpoes WHERE id = ?"
-        cursor.execute(query, (id,))
-        conn.commit()
-
-        if cursor.rowcount == 0:
-            return jsonify({"error": "Galpao não encontrado"}), 404
-
-        return jsonify({"message": "Galpao removido com sucesso", "id": id}), 200
-
-    except sqlite3.Error as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()

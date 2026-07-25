@@ -14,8 +14,8 @@ class AviculaService():
     def __init__(self):
         self.aviculaRepository = AviculaRepository()
 
-    def getAll(self):
-        rows = self.aviculaRepository.getAll()
+    def getAll(self, filtros, dict = None):
+        rows = self.aviculaRepository.getAll(filtros)
         logger.info(f"Retornando {len(rows)} aviculas")
         return [rowToAvicula(r) for r in rows]
 

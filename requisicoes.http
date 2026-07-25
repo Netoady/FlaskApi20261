@@ -1,8 +1,39 @@
-### Testando a Rota Raiz
-GET http://127.0.0.1:5001/
+### Variável com a URL base (opcional, mas facilita a manutenção)
+@baseUrl = http://127.0.0.1:5001
 
-### Testando o Health Check
-GET http://127.0.0.1:5001/health
+### Rota Inicial (Index)
+GET {{baseUrl}}/
+Accept: application/json
 
-### Testando a Rota de Avicultores (quando ligar o Blueprint)
-GET http://127.0.0.1:5001/avicultores
+### Check de Saúde (Health)
+GET {{baseUrl}}/health
+Accept: application/json
+
+### Listar todos os Avicultores ou Criar um novo
+GET {{baseUrl}}/avicultores
+Accept: application/json
+
+###
+POST {{baseUrl}}/avicultores
+Content-Type: application/json
+
+{
+  "nome": "João Silva",
+  "email": "joao@example.com"
+}
+
+### Buscar, Atualizar ou Deletar um Avicultor específico por ID
+# Substitua o '1' no final pelo ID desejado
+GET {{baseUrl}}/avicultores/1
+Accept: application/json
+
+###
+PUT {{baseUrl}}/avicultores/1
+Content-Type: application/json
+
+{
+  "nome": "João Silva Atualizado"
+}
+
+###
+DELETE {{baseUrl}}/avicultores/1

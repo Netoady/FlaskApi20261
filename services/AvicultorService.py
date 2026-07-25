@@ -11,14 +11,16 @@ def rowToAvicultor(row):
     caf = row[4]
     return Avicultor(id, nome, nascimento, cpf, caf)
 
+
 class AvicultorService():
+
     def __init__(self):
         self.avicultorRepository = AvicultorRepository()
 
-    def getAll(self):
-        rows = self.avicultorRepository.getAll()
+    def getAll(self, filtros, dict = None):
+        rows = self.avicultorRepository.getAll(filtros)
         logger.info(f"Retornando {len(rows)} avicultores")
-        return [rowToAvicultor(r) for r in rows]
+        return [rowToAvicultor(r) for r in rows]  
 
     def getByIdAvicultor(self, id):
         row = self.avicultorRepository.getByIdAvicultor(id)
@@ -34,7 +36,7 @@ class AvicultorService():
             nome, nascimento, cpf, caf
         )
         logger.info(f"Avicultor criado com id: {id}")
-        return Avicultor(id,  nome, nascimento, cpf, caf)
+        return Avicultor(id,  nome, nascimento, cpf, caf)  
 
     def update(self, id, data):
         affected = self.avicultorRepository.update(

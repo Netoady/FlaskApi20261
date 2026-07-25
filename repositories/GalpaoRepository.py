@@ -7,24 +7,34 @@ from helpers.logger import logger
 
 
 class GalpaoRepository():
-    def getAll(self):
+    def getAll(self, filtros=None):
         conn = get_conn()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM tb_galpoes")
+        query = "SELECT * FROM tb_galpoes"
+        values = []
+        
+        if filtros:
+            conditions = [f"{campo} = %s" for campo in filtros]
+            values = list(filtros.values())
+            query += " WHERE " + " " + " AND ".join(conditions)
+        
+        cursor.execute(query, values)
         return cursor.fetchall()
 
     def getByIdGalpao(self, id):
         conn = get_conn()
         cursor = conn.cursor()
         logger.info("Preparando statement.")
-        cursor.execute("SELECT * FROM tb_galpoes WHERE id=?", (id,))
+        # Ajustado de ? para %s
+        cursor.execute("SELECT * FROM tb_galpoes WHERE id=%s", (id,))
         return cursor.fetchone()
 
     def insert(self, identificador, area_m2):
         conn = get_conn()
         cursor = conn.cursor()
+        # Ajustado de ? para %s
         cursor.execute(
-            "INSERT INTO tb_galpoes(identificador, area_m2) VALUES(?, ?)",
+            "INSERT INTO tb_galpoes(identificador, area_m2) VALUES(%s, %s)",
             (identificador, area_m2)
         )
         conn.commit()
@@ -33,8 +43,9 @@ class GalpaoRepository():
     def update(self, id, identificador, area_m2):
         conn = get_conn()
         cursor = conn.cursor()
+        # Ajustado de ? para %s
         cursor.execute(
-            "UPDATE tb_galpoes SET identificador=?, area_m2=? WHERE id=?",
+            "UPDATE tb_galpoes SET identificador=%s, area_m2=%s WHERE id=%s",
             (identificador, area_m2, id)
         )
         conn.commit()
@@ -43,6 +54,7 @@ class GalpaoRepository():
     def delete(self, id):
         conn = get_conn()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM tb_galpoes WHERE id=?", (id,))
+        # Ajustado de ? para %s
+        cursor.execute("DELETE FROM tb_galpoes WHERE id=%s", (id,))
         conn.commit()
         return cursor.rowcount

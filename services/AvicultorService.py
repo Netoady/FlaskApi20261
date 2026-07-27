@@ -17,7 +17,7 @@ class AvicultorService():
     def __init__(self):
         self.avicultorRepository = AvicultorRepository()
 
-    def getAll(self, filtros, dict = None):
+    def getAll(self, filtros = None):
         rows = self.avicultorRepository.getAll(filtros)
         logger.info(f"Retornando {len(rows)} avicultores")
         return [rowToAvicultor(r) for r in rows]  

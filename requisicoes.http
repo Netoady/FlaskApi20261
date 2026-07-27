@@ -1,5 +1,5 @@
 ### Variável com a URL base (opcional, mas facilita a manutenção)
-@baseUrl = http://127.0.0.1:5001
+@baseUrl = http://localhost:5001
 
 ### Rota Inicial (Index)
 GET {{baseUrl}}/

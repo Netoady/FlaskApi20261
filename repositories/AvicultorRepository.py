@@ -37,8 +37,9 @@ class AvicultorRepository():
             "INSERT INTO tb_avicultores(nome, nascimento, cpf, caf) VALUES(%s, %s, %s, %s)",
             (nome, nascimento, cpf, caf)
         )
+        new_id = cursor.fetchone()[0]  # Obtém o ID do novo registro inserido
         conn.commit()
-        return cursor.lastrowid
+        return new_id
 
     def update(self, id, nome, nascimento, cpf, caf):
         conn = get_conn()
